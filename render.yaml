@@ -9,5 +9,5 @@ services:
     envVars:
       - key: ANTHROPIC_API_KEY
         sync: false
-      - key: ACCESS_KEY
+      - key: auxoai
         sync: false
