@@ -320,6 +320,25 @@
 const API_BASE = '';
 const ACCESS_KEY_STORAGE = 'cga_access_key';
 
+// Several apiFetch calls can be in flight at once (personas/platforms/KB all
+// load in parallel on page load). If more than one hits a 401 at the same
+// time, only one prompt() should appear — everyone else waits on it instead
+// of firing their own, otherwise concurrent calls can end up using different
+// (or empty) keys.
+let keyPromptInFlight = null;
+
+async function promptForAccessKey() {
+  if (keyPromptInFlight) return keyPromptInFlight;
+  keyPromptInFlight = (async () => {
+    const entered = prompt('This content agent requires an access key. Enter it:');
+    const trimmed = entered ? entered.trim() : '';
+    if (trimmed) localStorage.setItem(ACCESS_KEY_STORAGE, trimmed);
+    keyPromptInFlight = null;
+    return trimmed || null;
+  })();
+  return keyPromptInFlight;
+}
+
 async function apiFetch(path, options = {}) {
   const headers = { ...(options.headers || {}) };
   const storedKey = localStorage.getItem(ACCESS_KEY_STORAGE);
@@ -328,9 +347,8 @@ async function apiFetch(path, options = {}) {
   let res = await fetch(`${API_BASE}${path}`, { ...options, headers });
 
   if (res.status === 401) {
-    const entered = prompt('This content agent requires an access key. Enter it:');
+    const entered = await promptForAccessKey();
     if (entered) {
-      localStorage.setItem(ACCESS_KEY_STORAGE, entered);
       headers['X-Access-Key'] = entered;
       res = await fetch(`${API_BASE}${path}`, { ...options, headers });
     }

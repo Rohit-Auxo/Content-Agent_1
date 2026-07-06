@@ -50,7 +50,7 @@ def require_access_key(x_access_key: str | None = Header(default=None, alias="X-
     configured = os.getenv("ACCESS_KEY", "").strip()
     if not configured:
         return
-    if x_access_key != configured:
+    if (x_access_key or "").strip() != configured:
         raise HTTPException(status_code=401, detail="Invalid or missing access key")
 
 
