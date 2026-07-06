@@ -9,5 +9,3 @@ services:
     envVars:
       - key: ANTHROPIC_API_KEY
         sync: false
-      - key: ACCESS_KEY
-        sync: false
